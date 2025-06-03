@@ -7,6 +7,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/bufbuild/protovalidate-go"
+	"github.com/tierklinik-dobersberg/apis/gen/go/tkd/treatment/v1/treatmentv1connect"
 	"github.com/tierklinik-dobersberg/apis/pkg/auth"
 	"github.com/tierklinik-dobersberg/apis/pkg/cors"
 	"github.com/tierklinik-dobersberg/apis/pkg/log"
@@ -66,8 +67,8 @@ func main() {
 	// create a new CallService and add it to the mux.
 	svc := service.New(providers)
 
-	// path, handler := xxxv1connect.NewXXXServiceHandler(svc, interceptors)
-	// serveMux.Handle(path, handler)
+	path, handler := treatmentv1connect.NewSpeciesServiceHandler(svc, interceptors)
+	serveMux.Handle(path, handler)
 
 	// Create the server
 	srv := server.Create(cfg.PublicListenAddress, cors.Wrap(corsConfig, serveMux))

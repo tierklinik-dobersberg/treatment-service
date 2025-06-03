@@ -18,16 +18,7 @@ type Repository struct {
 	additionalTimeRequirement time.Duration
 }
 
-func NewRepository(ctx context.Context, databaseURL, databaseName string, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement time.Duration) (*Repository, error) {
-	cli, err := mongo.Connect(ctx, options.Client().ApplyURI(databaseURL))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	if err := cli.Ping(ctx, nil); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
-
+func NewRepositoryWithClient(ctx context.Context, cli *mongo.Client, databaseName string, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement time.Duration) (*Repository, error) {
 	db := cli.Database(databaseName)
 
 	r := &Repository{
@@ -43,6 +34,19 @@ func NewRepository(ctx context.Context, databaseURL, databaseName string, defaul
 	}
 
 	return r, nil
+}
+
+func NewRepository(ctx context.Context, databaseURL, databaseName string, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement time.Duration) (*Repository, error) {
+	cli, err := mongo.Connect(ctx, options.Client().ApplyURI(databaseURL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	if err := cli.Ping(ctx, nil); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return NewRepositoryWithClient(ctx, cli, databaseName, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement)
 }
 
 func (r *Repository) setup(ctx context.Context) error {
