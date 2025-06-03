@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/sethvargo/go-envconfig"
@@ -15,10 +16,14 @@ import (
 
 type Config struct {
 	IdmURL              string   `env:"IDM_URL" json:"idmURL"`
-	Database            string   `env:"DATABASE" json:"database"`
+	MongoURL            string   `env:"MONGOURL,required" json:"mongoUrl"`
+	DatabaseName        string   `env:"DATABASE,default=treatment-service" json:"database"`
 	AllowedOrigins      []string `env:"ALLOWED_ORIGINS" json:"allowedOrigins"`
-	PublicListenAddress string   `env:"PUBLIC_LISTEN" json:"publicListen"`
+	PublicListenAddress string   `env:"PUBLIC_LISTEN,default=:8080" json:"publicListen"`
 	AdminListenAddress  string   `env:"ADMIN_LISTEN" json:"adminListen"`
+
+	DefaultInitialTimeRequirement    time.Duration `env:"INITIAL_TIME_REQUIREMENT,default=15m"`
+	DefaultAdditionalTimeRequirement time.Duration `env:"ADDITIONAL_TIME_REQUIREMENT,default=10m"`
 }
 
 func LoadConfig(ctx context.Context, path string) (*Config, error) {
@@ -52,10 +57,6 @@ func LoadConfig(ctx context.Context, path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse configuration from environment: %w", err)
 	}
 
-	if cfg.PublicListenAddress == "" {
-		cfg.PublicListenAddress = ":8080"
-	}
-
 	if len(cfg.AllowedOrigins) == 0 {
 		cfg.AllowedOrigins = []string{"*"}
 	}
@@ -66,14 +67,6 @@ func LoadConfig(ctx context.Context, path string) (*Config, error) {
 
 	if _, err := url.Parse(cfg.IdmURL); err != nil {
 		return nil, fmt.Errorf("invalid IDM_URL: %w", err)
-	}
-
-	if cfg.Database == "" {
-		return nil, fmt.Errorf("missing database")
-	}
-
-	if _, err := url.Parse(cfg.Database); err != nil {
-		return nil, fmt.Errorf("invalid DATABASE: %w", err)
 	}
 
 	return &cfg, nil

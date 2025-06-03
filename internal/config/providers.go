@@ -21,7 +21,7 @@ type Providers struct {
 func NewProviders(ctx context.Context, cfg Config) (*Providers, error) {
 	httpClient := http.DefaultClient
 
-	repo, err := repo.NewRepository(ctx, cfg.Database)
+	repo, err := repo.NewRepository(ctx, cfg.MongoURL, cfg.DatabaseName, cfg.DefaultInitialTimeRequirement, cfg.DefaultAdditionalTimeRequirement)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create repository: %w", err)
 	}
