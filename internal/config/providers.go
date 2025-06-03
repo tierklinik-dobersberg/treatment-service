@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/tierklinik-dobersberg/apis/gen/go/tkd/idm/v1/idmv1connect"
+	"github.com/tierklinik-dobersberg/apis/pkg/h2utils"
 	"github.com/tierklinik-dobersberg/treatment-service/internal/repo"
 )
 
@@ -19,7 +20,7 @@ type Providers struct {
 }
 
 func NewProviders(ctx context.Context, cfg Config) (*Providers, error) {
-	httpClient := http.DefaultClient
+	httpClient := h2utils.WithDiscovery(nil, http.DefaultClient)
 
 	repo, err := repo.NewRepository(ctx, cfg.MongoURL, cfg.DatabaseName, cfg.DefaultInitialTimeRequirement, cfg.DefaultAdditionalTimeRequirement)
 	if err != nil {
