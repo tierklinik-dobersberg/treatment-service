@@ -1,4 +1,4 @@
-FROM golang:1.21 AS gobuild
+FROM golang:1.23 AS gobuild
 
 RUN update-ca-certificates
 

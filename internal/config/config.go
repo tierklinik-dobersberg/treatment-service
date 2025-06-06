@@ -16,7 +16,7 @@ import (
 
 type Config struct {
 	IdmURL              string   `env:"IDM_URL" json:"idmURL"`
-	MongoURL            string   `env:"MONGOURL,required" json:"mongoUrl"`
+	MongoURL            string   `env:"MONGO_URL,required" json:"mongoUrl"`
 	DatabaseName        string   `env:"DATABASE,default=treatment-service" json:"database"`
 	AllowedOrigins      []string `env:"ALLOWED_ORIGINS" json:"allowedOrigins"`
 	PublicListenAddress string   `env:"PUBLIC_LISTEN,default=:8080" json:"publicListen"`
