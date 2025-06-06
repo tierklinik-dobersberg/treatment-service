@@ -12,24 +12,42 @@ type Species struct {
 	DisplayName             string   `bson:"displayName"`
 	RequestCastrationStatus bool     `bson:"requestCastrationStatus"`
 	MatchWords              []string `bson:"matchWords"`
+	Icon                    []byte   `bson:"iconData"`
+	IconType                uint8    `bson:"iconType"`
 }
 
 func (s Species) ToProto() *treatmentv1.Species {
-	return &treatmentv1.Species{
+	spb := &treatmentv1.Species{
 		Name:                    s.Name,
 		DisplayName:             s.DisplayName,
 		RequestCastrationStatus: s.RequestCastrationStatus,
 		MatchWords:              s.MatchWords,
 	}
+
+	if s.IconType != 0 {
+		spb.Icon = &treatmentv1.Icon{
+			Data: s.Icon,
+			Type: treatmentv1.IconType(s.IconType),
+		}
+	}
+
+	return spb
 }
 
-func SpeciesFromProto(s *treatmentv1.Species) Species {
-	return Species{
-		Name:                    s.Name,
-		DisplayName:             s.DisplayName,
-		RequestCastrationStatus: s.RequestCastrationStatus,
-		MatchWords:              s.MatchWords,
+func SpeciesFromProto(spb *treatmentv1.Species) Species {
+	s := Species{
+		Name:                    spb.Name,
+		DisplayName:             spb.DisplayName,
+		RequestCastrationStatus: spb.RequestCastrationStatus,
+		MatchWords:              spb.MatchWords,
 	}
+
+	if spb.Icon != nil && spb.Icon.Type != treatmentv1.IconType_ICON_TYPE_UNSPECIFIED {
+		s.Icon = spb.Icon.Data
+		s.IconType = uint8(spb.Icon.Type)
+	}
+
+	return s
 }
 
 type Treatment struct {

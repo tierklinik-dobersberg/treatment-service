@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -21,8 +22,6 @@ import (
 func main() {
 	ctx := context.Background()
 
-	logger := log.L(ctx)
-
 	var cfgFilePath string
 	if len(os.Args) > 1 {
 		cfgFilePath = os.Args[1]
@@ -30,19 +29,23 @@ func main() {
 
 	cfg, err := config.LoadConfig(ctx, cfgFilePath)
 	if err != nil {
-		logger.Fatalf("failed to load configuration: %s", err)
+		slog.Error("failed to load configuration", "error", err)
+		os.Exit(1)
 	}
-	logger.Infof("configuration loaded successfully")
+	slog.Info("configuration loaded successfully")
 
 	providers, err := config.NewProviders(ctx, *cfg)
 	if err != nil {
-		logger.Fatalf("failed to prepare providers: %s", err)
+		slog.Error("failed to prepare providers", "error", err)
+		os.Exit(1)
 	}
-	logger.Infof("application providers prepared successfully")
+
+	slog.Info("application providers prepared successfully")
 
 	protoValidator, err := protovalidate.New()
 	if err != nil {
-		logger.Fatalf("failed to prepare protovalidator: %s", err)
+		slog.Error("failed to prepare protovalidate", "error", err)
+		os.Exit(1)
 	}
 
 	authInterceptor := auth.NewAuthAnnotationInterceptor(
@@ -70,12 +73,19 @@ func main() {
 	path, handler := treatmentv1connect.NewSpeciesServiceHandler(svc, interceptors)
 	serveMux.Handle(path, handler)
 
-	// Create the server
-	srv := server.Create(cfg.PublicListenAddress, cors.Wrap(corsConfig, serveMux))
+	path, handler = treatmentv1connect.NewTreatmentServiceHandler(svc, interceptors)
+	serveMux.Handle(path, handler)
 
-	logger.Infof("HTTP/2 server (h2c) prepared successfully, startin to listen ...")
+	// Create the server
+	srv, err := server.CreateWithOptions(cfg.PublicListenAddress, cors.Wrap(corsConfig, serveMux))
+	if err != nil {
+		slog.Error("failed to configure server", "error", err)
+	}
+
+	slog.Info("HTTP/2 server (h2c) prepared successfully, startin to listen ...")
 
 	if err := server.Serve(ctx, srv); err != nil {
-		logger.Fatalf("failed to serve: %s", err)
+		slog.Error("failed to serve", "error", err)
+		os.Exit(1)
 	}
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
 
 	"github.com/bufbuild/connect-go"
 	treatmentv1 "github.com/tierklinik-dobersberg/apis/gen/go/tkd/treatment/v1"
@@ -68,7 +71,7 @@ func (r *Repository) ListSpecies(ctx context.Context) ([]*treatmentv1.Species, e
 }
 
 func (r *Repository) UpdateSpecies(ctx context.Context, upd *treatmentv1.UpdateSpeciesRequest) (*treatmentv1.Species, error) {
-	paths := []string{"display_name", "request_castration_status", "match_words"}
+	paths := []string{"display_name", "request_castration_status", "match_words", "icon"}
 
 	if p := upd.GetUpdateMask().GetPaths(); len(p) > 0 {
 		paths = p
@@ -89,6 +92,31 @@ func (r *Repository) UpdateSpecies(ctx context.Context, upd *treatmentv1.UpdateS
 
 		case "name":
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("a species name cannot be updated"))
+
+		case "icon":
+			if upd.Species.Icon != nil {
+				updateModel["icon"] = upd.Species.Icon.Data
+				updateModel["iconType"] = uint8(upd.Species.Icon.Type)
+			} else {
+				updateModel["icon"] = []byte(nil)
+				updateModel["iconType"] = uint8(0)
+			}
+
+		case "icon.data":
+			if upd.Species.Icon != nil {
+				updateModel["icon"] = upd.Species.Icon.Data
+			} else {
+				updateModel["icon"] = []byte(nil)
+				updateModel["iconType"] = uint8(0)
+			}
+
+		case "icon.type":
+			if upd.Species.Icon != nil {
+				updateModel["iconType"] = uint8(upd.Species.Icon.Type)
+			} else {
+				updateModel["icon"] = []byte(nil)
+				updateModel["iconType"] = uint8(0)
+			}
 
 		default:
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid message field name: %s", p))
@@ -113,13 +141,7 @@ func (r *Repository) UpdateSpecies(ctx context.Context, upd *treatmentv1.UpdateS
 }
 
 func (r *Repository) DeleteSpecies(ctx context.Context, name string) error {
-	session, err := r.treatments.Database().Client().StartSession()
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-	defer session.EndSession(ctx)
-
-	_, err = session.WithTransaction(ctx, func(ctx mongo.SessionContext) (interface{}, error) {
+	_, err := r.withTransaction(ctx, func(ctx mongo.SessionContext) (interface{}, error) {
 		// first, find all treatments that have name listed on only contain one element
 		res, err := r.treatments.Find(ctx, bson.M{
 			"species": bson.M{
@@ -179,4 +201,48 @@ func (r *Repository) DeleteSpecies(ctx context.Context, name string) error {
 	})
 
 	return err
+}
+
+func (r *Repository) DetectSpecies(ctx context.Context, req *treatmentv1.DetectSpeciesRequest) ([]*treatmentv1.Species, error) {
+	species, err := r.ListSpecies(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find distinct matches and track how often a species matches a given value
+	// so we can sort based on the "best-match".
+	// TODO(ppacher): should we consider the length of the MatchWords to increase
+	// the best-match probability?
+	matches := make(map[string]*treatmentv1.Species)
+	matchCount := make(map[string]int)
+
+	for _, v := range req.Values {
+		l := strings.ToLower(v)
+
+		for _, s := range species {
+			for _, m := range s.MatchWords {
+				// TODO(ppacher): we might consider adding support for "regex" like queries
+				// that can specify if m should be surounded by whitespaces, start/end of string or
+				// may include other values (like .*) in the future.
+				// this would also require a change to how we calculate the match-count.
+				if strings.Contains(l, strings.ToLower(m)) {
+					matches[s.Name] = s
+					matchCount[s.Name]++
+				}
+			}
+		}
+	}
+
+	result := slices.Collect(maps.Values(matches))
+
+	// sort in descending order to ensure the species with the most
+	// matches are on top.
+	//
+	// TODO(ppacher): we might consider exposing the match-count (or a better metric in the future)
+	// via the API.
+	slices.SortStableFunc(result, func(a, b *treatmentv1.Species) int {
+		return matchCount[b.Name] - matchCount[a.Name]
+	})
+
+	return result, nil
 }

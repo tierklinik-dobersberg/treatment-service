@@ -89,3 +89,13 @@ func (r *Repository) setup(ctx context.Context) error {
 
 	return nil
 }
+
+func (r *Repository) withTransaction(ctx context.Context, fn func(mongo.SessionContext) (any, error)) (any, error) {
+	session, err := r.treatments.Database().Client().StartSession()
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer session.EndSession(ctx)
+
+	return session.WithTransaction(ctx, fn)
+}

@@ -61,3 +61,16 @@ func (svc *Service) UpdateSpecies(ctx context.Context, req *connect.Request[trea
 
 	return connect.NewResponse(res), nil
 }
+
+func (svc *Service) DetectSpecies(ctx context.Context, req *connect.Request[treatmentv1.DetectSpeciesRequest]) (*connect.Response[treatmentv1.ListSpeciesResponse], error) {
+	res, err := svc.Repository.DetectSpecies(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &treatmentv1.ListSpeciesResponse{
+		Species: res,
+	}
+
+	return connect.NewResponse(response), nil
+}
