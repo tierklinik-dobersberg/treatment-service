@@ -11,6 +11,9 @@ import (
 	"github.com/tierklinik-dobersberg/apis/gen/go/tkd/treatment/v1/treatmentv1connect"
 	"github.com/tierklinik-dobersberg/apis/pkg/auth"
 	"github.com/tierklinik-dobersberg/apis/pkg/cors"
+	"github.com/tierklinik-dobersberg/apis/pkg/discovery"
+	"github.com/tierklinik-dobersberg/apis/pkg/discovery/consuldiscover"
+	"github.com/tierklinik-dobersberg/apis/pkg/discovery/wellknown"
 	"github.com/tierklinik-dobersberg/apis/pkg/log"
 	"github.com/tierklinik-dobersberg/apis/pkg/server"
 	"github.com/tierklinik-dobersberg/apis/pkg/validator"
@@ -18,6 +21,8 @@ import (
 	"github.com/tierklinik-dobersberg/treatment-service/internal/service"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
+
+var serverContextKey = struct{ S string }{S: "serverContextKey"}
 
 func main() {
 	ctx := context.Background()
@@ -51,17 +56,58 @@ func main() {
 	authInterceptor := auth.NewAuthAnnotationInterceptor(
 		protoregistry.GlobalFiles,
 		auth.NewIDMRoleResolver(providers.Roles),
-		auth.RemoteHeaderExtractor)
+		func(ctx context.Context, req connect.AnyRequest) (auth.RemoteUser, error) {
+			serverKey, _ := ctx.Value(serverContextKey).(string)
 
-	interceptors := connect.WithInterceptors(
-		log.NewLoggingInterceptor(),
-		authInterceptor,
-		validator.NewInterceptor(protoValidator),
+			if serverKey == "admin" {
+				return auth.RemoteUser{
+					ID:          "service-account",
+					DisplayName: req.Peer().Addr,
+					RoleIDs:     []string{"idm_superuser"}, // FIXME(ppacher): use a dedicated manager role for this
+					Admin:       true,
+				}, nil
+			}
+
+			return auth.RemoteHeaderExtractor(ctx, req)
+		},
 	)
+
+	interceptors := []connect.Interceptor{
+		log.NewLoggingInterceptor(),
+		validator.NewInterceptor(protoValidator),
+	}
+
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	if os.Getenv("DEBUG") == "" {
+		interceptors = append(interceptors, authInterceptor)
+	}
 
 	corsConfig := cors.Config{
 		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowCredentials: true,
+	}
+
+	wrapWithKey := func(key string, next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), serverContextKey, key))
+
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Register at service catalog
+	catalog, err := consuldiscover.NewFromEnv()
+	if err != nil {
+		slog.Error("failed to get service catalog client", "error", err)
+		os.Exit(1)
+	}
+
+	if err := discovery.Register(ctx, catalog, &discovery.ServiceInstance{
+		Name:    wellknown.CustomerV1ServiceScope,
+		Address: cfg.AdminListenAddress,
+	}); err != nil {
+		slog.Error("failed to register customer-import-service at service catalog", "error", err)
 	}
 
 	// Prepare our servemux and add handlers.
@@ -70,21 +116,26 @@ func main() {
 	// create a new CallService and add it to the mux.
 	svc := service.New(providers)
 
-	path, handler := treatmentv1connect.NewSpeciesServiceHandler(svc, interceptors)
+	path, handler := treatmentv1connect.NewSpeciesServiceHandler(svc, connect.WithInterceptors(interceptors...))
 	serveMux.Handle(path, handler)
 
-	path, handler = treatmentv1connect.NewTreatmentServiceHandler(svc, interceptors)
+	path, handler = treatmentv1connect.NewTreatmentServiceHandler(svc, connect.WithInterceptors(interceptors...))
 	serveMux.Handle(path, handler)
 
 	// Create the server
-	srv, err := server.CreateWithOptions(cfg.PublicListenAddress, cors.Wrap(corsConfig, serveMux))
+	srv, err := server.CreateWithOptions(cfg.PublicListenAddress, wrapWithKey("public", serveMux), server.WithCORS(corsConfig))
+	if err != nil {
+		slog.Error("failed to configure server", "error", err)
+	}
+
+	adminSrv, err := server.CreateWithOptions(cfg.AdminListenAddress, wrapWithKey("admin", serveMux), server.WithCORS(corsConfig))
 	if err != nil {
 		slog.Error("failed to configure server", "error", err)
 	}
 
 	slog.Info("HTTP/2 server (h2c) prepared successfully, startin to listen ...")
 
-	if err := server.Serve(ctx, srv); err != nil {
+	if err := server.Serve(ctx, srv, adminSrv); err != nil {
 		slog.Error("failed to serve", "error", err)
 		os.Exit(1)
 	}
