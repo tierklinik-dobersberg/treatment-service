@@ -145,7 +145,7 @@ func (r *Repository) DeleteSpecies(ctx context.Context, name string) error {
 		// first, find all treatments that have name listed on only contain one element
 		res, err := r.treatments.Find(ctx, bson.M{
 			"species": bson.M{
-				"$elemMatch": name,
+				"$in": []string{name},
 				"$size":      1,
 			},
 		})
