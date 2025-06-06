@@ -107,7 +107,7 @@ func main() {
 		Name:    wellknown.TreatmentV1ServiceScope,
 		Address: cfg.AdminListenAddress,
 	}); err != nil {
-		slog.Error("failed to register customer-import-service at service catalog", "error", err)
+		slog.Error("failed to register treatment-service at service catalog", "error", err)
 	}
 
 	// Prepare our servemux and add handlers.
