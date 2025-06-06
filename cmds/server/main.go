@@ -104,7 +104,7 @@ func main() {
 	}
 
 	if err := discovery.Register(ctx, catalog, &discovery.ServiceInstance{
-		Name:    wellknown.CustomerV1ServiceScope,
+		Name:    wellknown.TreatmentV1ServiceScope,
 		Address: cfg.AdminListenAddress,
 	}); err != nil {
 		slog.Error("failed to register customer-import-service at service catalog", "error", err)
@@ -122,18 +122,17 @@ func main() {
 	path, handler = treatmentv1connect.NewTreatmentServiceHandler(svc, connect.WithInterceptors(interceptors...))
 	serveMux.Handle(path, handler)
 
-	// Create the server
+	// Create the servers
 	srv, err := server.CreateWithOptions(cfg.PublicListenAddress, wrapWithKey("public", serveMux), server.WithCORS(corsConfig))
 	if err != nil {
 		slog.Error("failed to configure server", "error", err)
 	}
-
 	adminSrv, err := server.CreateWithOptions(cfg.AdminListenAddress, wrapWithKey("admin", serveMux), server.WithCORS(corsConfig))
 	if err != nil {
 		slog.Error("failed to configure server", "error", err)
 	}
 
-	slog.Info("HTTP/2 server (h2c) prepared successfully, startin to listen ...")
+	slog.Info("HTTP/2 server (h2c) prepared successfully, starting to listen ...")
 
 	if err := server.Serve(ctx, srv, adminSrv); err != nil {
 		slog.Error("failed to serve", "error", err)
