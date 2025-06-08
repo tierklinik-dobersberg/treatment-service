@@ -245,6 +245,8 @@ github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608110312-1303b52d8a8a h1:d
 github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608110312-1303b52d8a8a/go.mod h1:gXuKcer0mMcGWw3DN9M05trUk3LenkcUkSO/pUGSqIA=
 github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608112646-26091be438b4 h1:z89wY6iII+zwTN3OyKZzVcObuIgl+ES1y5nP1VdKKc0=
 github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608112646-26091be438b4/go.mod h1:gXuKcer0mMcGWw3DN9M05trUk3LenkcUkSO/pUGSqIA=
+github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608131210-326b801507a1 h1:rBrtqYZjvU7DLG9NvltBlCxmzVIlnRF+iSZ75SimaFU=
+github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608131210-326b801507a1/go.mod h1:gXuKcer0mMcGWw3DN9M05trUk3LenkcUkSO/pUGSqIA=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/pbkdf2 v1.0.0/go.mod h1:jrpuAogTd400dnrH08LKmI/xc1MbPOebTwRqcT5RDeI=
