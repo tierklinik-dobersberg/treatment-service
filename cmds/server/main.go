@@ -39,7 +39,13 @@ func main() {
 	}
 	slog.Info("configuration loaded successfully")
 
-	providers, err := config.NewProviders(ctx, *cfg)
+	catalog, err := consuldiscover.NewFromEnv()
+	if err != nil {
+		slog.Error("failed to get service catalog client", "error", err)
+		os.Exit(1)
+	}
+
+	providers, err := config.NewProviders(ctx, *cfg, catalog)
 	if err != nil {
 		slog.Error("failed to prepare providers", "error", err)
 		os.Exit(1)
@@ -55,7 +61,7 @@ func main() {
 
 	authInterceptor := auth.NewAuthAnnotationInterceptor(
 		protoregistry.GlobalFiles,
-		auth.NewIDMRoleResolver(providers.Roles),
+		auth.NewIDMRoleResolver(providers.Clients.RoleService),
 		func(ctx context.Context, req connect.AnyRequest) (auth.RemoteUser, error) {
 			serverKey, _ := ctx.Value(serverContextKey).(string)
 
@@ -97,14 +103,9 @@ func main() {
 	}
 
 	// Register at service catalog
-	catalog, err := consuldiscover.NewFromEnv()
-	if err != nil {
-		slog.Error("failed to get service catalog client", "error", err)
-		os.Exit(1)
-	}
 
 	if err := discovery.Register(ctx, catalog, &discovery.ServiceInstance{
-		Name:    wellknown.TreatmentV1ServiceScope,
+		Name:    string(wellknown.TreatmentV1ServiceScope),
 		Address: cfg.AdminListenAddress,
 	}); err != nil {
 		slog.Error("failed to register treatment-service at service catalog", "error", err)

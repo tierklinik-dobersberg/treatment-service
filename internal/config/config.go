@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -15,7 +14,6 @@ import (
 )
 
 type Config struct {
-	IdmURL              string   `env:"IDM_URL" json:"idmURL"`
 	MongoURL            string   `env:"MONGO_URL,required" json:"mongoUrl"`
 	DatabaseName        string   `env:"DATABASE,default=treatment-service" json:"database"`
 	AllowedOrigins      []string `env:"ALLOWED_ORIGINS" json:"allowedOrigins"`
@@ -59,14 +57,6 @@ func LoadConfig(ctx context.Context, path string) (*Config, error) {
 
 	if len(cfg.AllowedOrigins) == 0 {
 		cfg.AllowedOrigins = []string{"*"}
-	}
-
-	if cfg.IdmURL == "" {
-		return nil, fmt.Errorf("missing idmUrl config setting")
-	}
-
-	if _, err := url.Parse(cfg.IdmURL); err != nil {
-		return nil, fmt.Errorf("invalid IDM_URL: %w", err)
 	}
 
 	return &cfg, nil
