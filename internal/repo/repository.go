@@ -18,9 +18,7 @@ type Repository struct {
 	additionalTimeRequirement time.Duration
 }
 
-func NewRepositoryWithClient(ctx context.Context, cli *mongo.Client, databaseName string, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement time.Duration) (*Repository, error) {
-	db := cli.Database(databaseName)
-
+func NewRepositoryWithClient(ctx context.Context, db *mongo.Database, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement time.Duration) (*Repository, error) {
 	r := &Repository{
 		species:    db.Collection("species"),
 		treatments: db.Collection("treatments"),
@@ -46,7 +44,7 @@ func NewRepository(ctx context.Context, databaseURL, databaseName string, defaul
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	return NewRepositoryWithClient(ctx, cli, databaseName, defaultInitialTimeRequirement, defaultAdditionalTimeRequirement)
+	return NewRepositoryWithClient(ctx, cli.Database(databaseName), defaultInitialTimeRequirement, defaultAdditionalTimeRequirement)
 }
 
 func (r *Repository) setup(ctx context.Context) error {
