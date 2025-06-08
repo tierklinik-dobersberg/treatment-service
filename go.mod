@@ -7,7 +7,7 @@ require (
 	github.com/bufbuild/protovalidate-go v0.10.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/sethvargo/go-envconfig v1.3.0
-	github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608110312-1303b52d8a8a
+	github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608112646-26091be438b4
 	go.mongodb.org/mongo-driver v1.17.4
 	google.golang.org/protobuf v1.36.6
 )
