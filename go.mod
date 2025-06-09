@@ -4,7 +4,7 @@ go 1.23.8
 
 require (
 	github.com/bufbuild/connect-go v1.10.0
-	github.com/tierklinik-dobersberg/apis v0.50.2-0.20250608151234-599bfa521017
+	github.com/tierklinik-dobersberg/apis v0.50.2
 	go.mongodb.org/mongo-driver v1.17.4
 	google.golang.org/protobuf v1.36.6
 )

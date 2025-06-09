@@ -41,7 +41,7 @@ func (svc *Service) DeleteSpecies(ctx context.Context, req *connect.Request[trea
 }
 
 func (svc *Service) ListSpecies(ctx context.Context, req *connect.Request[treatmentv1.ListSpeciesRequest]) (*connect.Response[treatmentv1.ListSpeciesResponse], error) {
-	res, err := svc.Repository.ListSpecies(ctx)
+	res, err := svc.Repository.ListSpecies(ctx, req.Msg.Names)
 	if err != nil {
 		return nil, err
 	}

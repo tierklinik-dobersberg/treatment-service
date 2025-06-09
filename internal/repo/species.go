@@ -51,8 +51,16 @@ func (r *Repository) GetSpecies(ctx context.Context, name string) (*treatmentv1.
 	return m.ToProto(), nil
 }
 
-func (r *Repository) ListSpecies(ctx context.Context) ([]*treatmentv1.Species, error) {
-	result, err := r.species.Find(ctx, bson.M{})
+func (r *Repository) ListSpecies(ctx context.Context, names []string) ([]*treatmentv1.Species, error) {
+	filter := bson.M{}
+
+	if len(names) > 0 {
+		filter["name"] = bson.M{
+			"$in": names,
+		}
+	}
+
+	result, err := r.species.Find(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform database find: %w", err)
 	}
@@ -145,8 +153,8 @@ func (r *Repository) DeleteSpecies(ctx context.Context, name string) error {
 		// first, find all treatments that have name listed on only contain one element
 		res, err := r.treatments.Find(ctx, bson.M{
 			"species": bson.M{
-				"$in": []string{name},
-				"$size":      1,
+				"$in":   []string{name},
+				"$size": 1,
 			},
 		})
 		if err != nil {
@@ -204,7 +212,7 @@ func (r *Repository) DeleteSpecies(ctx context.Context, name string) error {
 }
 
 func (r *Repository) DetectSpecies(ctx context.Context, req *treatmentv1.DetectSpeciesRequest) ([]*treatmentv1.Species, error) {
-	species, err := r.ListSpecies(ctx)
+	species, err := r.ListSpecies(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
