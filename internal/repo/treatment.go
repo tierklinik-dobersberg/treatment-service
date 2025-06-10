@@ -137,6 +137,7 @@ func (r *Repository) UpdateTreatment(ctx context.Context, upd *treatmentv1.Updat
 		"preferred_employees",
 		"match_event_text",
 		"allow_self_booking",
+		"resources",
 	}
 
 	if p := upd.GetUpdateMask().GetPaths(); len(p) > 0 {
@@ -173,6 +174,9 @@ func (r *Repository) UpdateTreatment(ctx context.Context, upd *treatmentv1.Updat
 
 		case "allow_self_booking":
 			set["allowSelfBooking"] = upd.AllowSelfBooking
+
+		case "resources":
+			set["resources"] = upd.Resources
 
 		default:
 			return nil, fmt.Errorf("invalid message field path %q", p)

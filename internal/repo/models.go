@@ -61,6 +61,7 @@ type Treatment struct {
 	PreferredEmployees        []string      `bson:"preferredEmployees"`
 	MatchEventText            []string      `bson:"matchEventText"`
 	AllowSelfBooking          bool          `bson:"allowSelfBooking"`
+	Resources                 []string      `bson:"resources"`
 }
 
 func (t Treatment) ToProto() *treatmentv1.Treatment {
@@ -75,6 +76,7 @@ func (t Treatment) ToProto() *treatmentv1.Treatment {
 		PreferredEmployees:        t.PreferredEmployees,
 		MatchEventText:            t.MatchEventText,
 		AllowSelfBooking:          t.AllowSelfBooking,
+		Resources:                 t.Resources,
 	}
 }
 
@@ -90,5 +92,6 @@ func TreatmentFromProto(t *treatmentv1.Treatment) Treatment {
 		PreferredEmployees:        t.PreferredEmployees,
 		MatchEventText:            t.MatchEventText,
 		AllowSelfBooking:          t.AllowSelfBooking,
+		Resources:                 t.Resources,
 	}
 }
