@@ -164,7 +164,7 @@ func (r *Repository) UpdateTreatment(ctx context.Context, upd *treatmentv1.Updat
 			set["initialTimeRequirement"] = upd.InitialTimeRequirement.AsDuration()
 
 		case "additional_time_requirement":
-			set["additional_time_requirement"] = upd.AdditionalTimeRequirement.AsDuration()
+			set["additionalTimeRequirement"] = upd.AdditionalTimeRequirement.AsDuration()
 
 		case "allowed_employees":
 			set["allowedEmployees"] = upd.AllowedEmployees
