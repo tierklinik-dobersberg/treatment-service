@@ -151,6 +151,9 @@ func (r *Repository) UpdateTreatment(ctx context.Context, upd *treatmentv1.Updat
 		case "name":
 			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("treatment name cannot be updated"))
 
+		case "display_name":
+			set["displayName"] = upd.DisplayName
+
 		case "help_text":
 			set["helpText"] = upd.HelpText
 
