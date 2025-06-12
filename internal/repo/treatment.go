@@ -86,7 +86,7 @@ func (r *Repository) QuerySpecies(ctx context.Context, species []string, display
 	result := make([]*treatmentv1.Treatment, 0, len(all))
 	for _, t := range all {
 		if len(species) > 0 {
-			if len(species) > 0 && !data.ElemInBothSlices(species, t.Species) {
+			if len(t.Species) > 0 && len(species) > 0 && !data.ElemInBothSlices(species, t.Species) {
 				continue
 			}
 
