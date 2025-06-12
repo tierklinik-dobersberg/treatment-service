@@ -18,7 +18,12 @@ func (svc *Service) CreateTreatment(ctx context.Context, req *connect.Request[tr
 }
 
 func (svc *Service) ListTreatments(ctx context.Context, req *connect.Request[treatmentv1.ListTreatmentsRequest]) (*connect.Response[treatmentv1.ListTreatmentsResponse], error) {
-	res, err := svc.Repository.ListTreatments(ctx)
+	species := []string{}
+	if req.Msg.Species != "" {
+		species = []string{req.Msg.Species}
+	}
+
+	res, err := svc.Repository.QuerySpecies(ctx, species, req.Msg.DisplayNameSearch)
 	if err != nil {
 		return nil, err
 	}

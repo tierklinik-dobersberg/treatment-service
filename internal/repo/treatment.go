@@ -73,7 +73,7 @@ func (r *Repository) GetTreatment(ctx context.Context, name string) (*treatmentv
 	return t.ToProto(), nil
 }
 
-func (r *Repository) ListTreatments(ctx context.Context) ([]*treatmentv1.Treatment, error) {
+func (r *Repository) ListTreatments(ctx context.Context, search string) ([]*treatmentv1.Treatment, error) {
 	return r.findTreatments(ctx, bson.M{})
 }
 
